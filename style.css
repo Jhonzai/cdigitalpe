@@ -1,0 +1,909 @@
+:root{
+  --bg1:#FFF6E5;
+  --bg2:#DFF6FF;
+  --ink:#3A3358;
+  --green:#2ECC71;
+  --green-dark:#1E9E56;
+  --red:#FF5D5D;
+  --red-dark:#D93838;
+  --yellow:#FFC107;
+  --purple:#7C4DFF;
+  --calm:#4A90D9;
+  --white:#FFFFFF;
+  --shadow:0 6px 0 rgba(0,0,0,0.12);
+  /* Paleta extendida (inspirada en la referencia gráfica del usuario):
+     acentos vibrantes reservados para momentos interactivos o de logro,
+     no para rellenar superficies grandes (ver "espacio en blanco" en
+     la guía UX/UI de 6-9 años). */
+  --teal:#3CDCB0;
+  --sky:#5AD2FF;
+  --accent-yellow:#FFD200;
+  --mascot-pink:#FF8FC7;
+  /* Actualizado por JS (setThemeColorVar) al entrar a la teoría, el
+     quiz o el resultado de cada tema; alimenta los fondos ilustrados
+     por tema más abajo. Valor por defecto = morado de la marca. */
+  --theme-color-rgb: 124,77,255;
+}
+
+/* Icono de bandera del Perú en SVG (algunos sistemas, sobre todo
+   Windows, no renderizan el emoji 🇵🇪 y muestran "PE" en su lugar) */
+.flag-icon{
+  width:24px; height:16px; vertical-align:middle; border-radius:3px;
+  overflow:hidden; display:inline-block; box-shadow:0 0 0 1px rgba(0,0,0,.08) inset;
+}
+.question-image svg.flag-icon{ width:92px; height:61px; border-radius:12px; }
+.theory-list li svg.flag-icon{ margin-right:2px; }
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+
+/* ============ ACCESIBILIDAD: FOCO VISIBLE ============
+   Se usa :focus-visible (no :focus) para que el anillo aparezca solo
+   cuando se navega con teclado, no en cada toque o clic con el mouse:
+   así no se ve como "ruido" para quien usa touch, pero sigue siendo
+   navegable con teclado -importante para perfiles que prefieren Tab
+   en vez de mouse-. Mismo acento morado de la marca, para que se
+   sienta parte del diseño y no un anillo azul genérico del navegador. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+[role="button"]:focus-visible,
+.theme-card:focus-visible,
+.prep-card:focus-visible,
+.mcq-option:focus-visible,
+.order-card:focus-visible,
+.flex-card:focus-visible,
+.cra-item:focus-visible,
+.cra-zone:focus-visible{
+  outline:3px solid var(--purple);
+  outline-offset:3px;
+  border-radius:inherit;
+}
+.toggle-switch input:focus-visible + .toggle-slider{
+  outline:3px solid var(--purple);
+  outline-offset:3px;
+}
+
+html,body{
+  margin:0; padding:0; height:100%;
+  font-family:"Trebuchet MS","Comic Sans MS","Baloo 2",Verdana,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(160deg,var(--bg1) 0%, var(--bg2) 100%);
+  overflow-x:hidden;
+}
+
+#confettiCanvas{
+  position:fixed; inset:0; width:100%; height:100%;
+  pointer-events:none; z-index:999;
+}
+
+#app{
+  max-width:900px; margin:0 auto; position:relative;
+  min-height:100vh; min-height:100dvh;
+  padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+
+.screen{ display:none; animation:fadeIn .35s ease; }
+.screen.active{ display:block; }
+
+@keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+/* ============ HOME ============ */
+.home-header{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; margin-bottom:6px; flex-wrap:wrap;
+}
+.mascot-row{ display:flex; align-items:center; gap:12px; }
+/* Mascota (ajolote rosado): personaje fijo en toda la app para dar
+   continuidad emocional entre pantallas ("Efecto Cara"). Se inserta
+   como SVG inline vía JS (ver AXOLOTL_* en app.js), nunca como imagen
+   externa, para mantener la app en un solo archivo autocontenido. */
+.mascot{ display:inline-block; width:clamp(56px,8vw,72px); height:clamp(56px,8vw,72px); filter:drop-shadow(0 4px 0 rgba(0,0,0,.08)); animation:bob 3s ease-in-out infinite; }
+.mascot svg,.mascot .axolotl,.mascot .axolotl-head{ width:100%; height:100%; display:block; }
+@keyframes bob{ 0%,100%{transform:translateY(0) rotate(-3deg);} 50%{transform:translateY(-6px) rotate(3deg);} }
+
+/* Cabeza que "habla" (ver AXOLOTL_TALK_HEAD / createTalkingMascot en
+   app.js): por defecto se ve quieta con sonrisa (.mouth-idle). Mientras
+   el navegador lee en voz alta, JS alterna las clases speak-a/speak-b
+   en el contenedor .mascot para simular que mueve la boca, y aparece
+   un pequeño globo de puntos — así se percibe como un personaje que
+   habla, no como un ícono estático junto al texto. */
+.axolotl-head .mouth-a,.axolotl-head .mouth-b{ display:none; }
+.mascot.speak-a .axolotl-head .mouth-idle{ display:none; }
+.mascot.speak-a .axolotl-head .mouth-a{ display:block; }
+.mascot.speak-b .axolotl-head .mouth-idle{ display:none; }
+.mascot.speak-b .axolotl-head .mouth-b{ display:block; }
+.axolotl-head .talk-bubble{ opacity:0; transition:opacity .15s ease; }
+.mascot.talking .axolotl-head .talk-bubble{ opacity:1; }
+.axolotl-head .talk-bubble circle{ animation:talkDotPulse 1s ease-in-out infinite; transform-origin:center; }
+.axolotl-head .talk-bubble circle:nth-child(2){ animation-delay:.15s; }
+.axolotl-head .talk-bubble circle:nth-child(3){ animation-delay:.3s; }
+@keyframes talkDotPulse{ 0%,100%{ opacity:.35; transform:scale(0.8);} 50%{ opacity:1; transform:scale(1);} }
+.mascot.talking{ animation:none; }
+
+.prep-mascot-row{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.prep-mascot{ width:64px; height:64px; flex-shrink:0; animation:none; }
+.speech-bubble{
+  position:relative; background:#fff; border-radius:16px; padding:10px 16px;
+  font-size:14px; font-weight:bold; color:var(--ink); box-shadow:var(--shadow);
+}
+.speech-bubble::before{
+  content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%);
+  border-width:8px 10px 8px 0; border-style:solid; border-color:transparent #fff transparent transparent;
+}
+.result-mascot{ width:96px; height:96px; margin:0 auto 4px; }
+
+/* Texto "sticker" para momentos de logro (Efecto Von Restorff): contorno
+   blanco grueso + color vibrante, igual al patrón "¡Fantástico!" de la
+   referencia gráfica, para que el hito resalte del resto de la interfaz. */
+/* #resultTitle.sticker-text (mayor especificidad que #resultTitle solo,
+   para que gane sobre esa regla en vez de perder el contorno por el orden
+   de cascada) */
+#resultTitle.sticker-text{
+  -webkit-text-stroke:6px #fff; paint-order:stroke fill;
+  text-shadow:0 4px 0 rgba(0,0,0,.08);
+  color:#FF508C; font-size:clamp(24px,5vw,40px); margin:6px 0 2px;
+}
+
+/* Confeti decorativo estilo "memphis" (formas geométricas sueltas) para
+   la pantalla de resultado — solo decorativo, no interactivo. Flotan
+   suavemente (como el splash de referencia) para transmitir "celebración
+   sin urgencia": un movimiento lento y continuo, nunca brusco. */
+.memphis-shapes{ position:absolute; inset:0; overflow:hidden; border-radius:28px; pointer-events:none; }
+.memphis-shapes .shape{ position:absolute; opacity:.55; animation-timing-function:ease-in-out; animation-iteration-count:infinite; }
+.shape-1{ top:8%; left:6%; width:14px; height:14px; border-radius:50%; background:var(--sky); animation:shapeFloat 4.2s ease-in-out infinite; animation-delay:0s; }
+.shape-2{ top:14%; right:10%; width:16px; height:16px; background:var(--accent-yellow); animation:shapeFloatRot20 3.8s ease-in-out infinite; animation-delay:.4s; }
+.shape-3{ bottom:12%; left:10%; width:0; height:0; border-left:9px solid transparent; border-right:9px solid transparent; border-bottom:15px solid var(--teal); animation:shapeFloat 4.6s ease-in-out infinite; animation-delay:.8s; }
+.shape-4{ top:44%; left:4%; width:12px; height:12px; border-radius:50%; background:#FF508C; animation:shapeFloat 3.6s ease-in-out infinite; animation-delay:.2s; }
+.shape-5{ top:10%; left:44%; width:13px; height:13px; background:var(--purple); border-radius:3px; animation:shapeFloatRot45 4.4s ease-in-out infinite; animation-delay:.6s; }
+.shape-6{ bottom:10%; right:8%; width:15px; height:15px; border-radius:50%; border:4px solid var(--sky); background:none; animation:shapeFloat 5s ease-in-out infinite; animation-delay:1s; }
+.shape-7{ bottom:30%; right:14%; width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent; border-bottom:13px solid var(--accent-yellow); animation:shapeFloat 4s ease-in-out infinite; animation-delay:.5s; }
+.shape-8{ top:50%; right:5%; width:12px; height:12px; background:var(--teal); border-radius:3px; animation:shapeFloatRot45 3.4s ease-in-out infinite; animation-delay:.1s; }
+
+@keyframes shapeFloat{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-9px); }
+}
+@keyframes shapeFloatRot20{
+  0%,100%{ transform:translateY(0) rotate(20deg); }
+  50%{ transform:translateY(-8px) rotate(26deg); }
+}
+@keyframes shapeFloatRot45{
+  0%,100%{ transform:translateY(0) rotate(45deg); }
+  50%{ transform:translateY(-8px) rotate(51deg); }
+}
+@media (prefers-reduced-motion: reduce){
+  .memphis-shapes .shape{ animation:none; }
+  /* La mascota "respira" en bucle infinito (bob 3s) en toda la app.
+     Es puramente decorativo -no comunica estado-, así que si el
+     sistema pide menos movimiento, se queda quieta pero visible
+     (no display:none) en su pose base. */
+  .mascot{ animation:none; }
+  .mascot.talking{ animation:none; }
+  .trophy{ animation:none; }
+  .shape-1,.shape-2,.shape-3,.shape-4,.shape-5,.shape-6,.shape-7,.shape-8{ animation:none; }
+}
+.title-block h1{ margin:0; font-size:clamp(22px,4vw,32px); color:var(--purple); }
+.title-block p{ margin:2px 0 0; font-size:clamp(14px,2vw,17px); color:#7A7397; }
+
+.total-stars{
+  display:flex; align-items:center; gap:6px;
+  background:var(--white); border-radius:999px; padding:8px 16px;
+  box-shadow:var(--shadow); font-weight:bold; font-size:18px;
+}
+.total-stars .star-icon{ font-size:22px; }
+
+.home-instructions{ text-align:center; font-size:clamp(16px,2.2vw,19px); margin:18px 0 14px; color:#5B5478; font-weight:bold;}
+
+.theme-grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:16px; margin-bottom:20px;
+}
+
+.theme-card{
+  position:relative; border-radius:22px; padding:18px 14px 16px;
+  background:var(--card-color, #fff); color:#fff; cursor:pointer;
+  box-shadow:var(--shadow); border:none; text-align:left;
+  transition:transform .12s ease, box-shadow .12s ease;
+  overflow:hidden; min-height:150px; display:flex; flex-direction:column; justify-content:flex-end;
+  /* Tinte fijo (no depende del tema): la tarjeta ya usa el color del
+     tema como fondo, así que su "escena" se dibuja en blanco translúcido
+     encima. Las tarjetas blancas (teoría/pregunta/resultado) usan en
+     cambio un tinte del color del tema, definido más abajo. */
+  --scene-tint: rgba(255,255,255,.3);
+}
+.theme-card:active{ transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,.12); }
+.theme-card .card-emoji{
+  position:absolute; top:10px; right:10px; font-size:44px;
+  filter:drop-shadow(0 3px 0 rgba(0,0,0,.15));
+}
+.theme-card .card-title{ font-size:17px; font-weight:bold; line-height:1.25; margin-top:30px; text-shadow:0 2px 2px rgba(0,0,0,.15); }
+.theme-card .card-status{ margin-top:8px; font-size:13px; font-weight:bold; opacity:.95; display:flex; align-items:center; gap:4px;}
+
+.theme-card .cover{
+  position:absolute; inset:0; border-radius:22px; pointer-events:none;
+}
+.theme-card.completed .cover{ background:rgba(46,204,113,0.38); border:4px solid rgba(46,204,113,0.75); }
+.theme-card.incomplete .cover{ background:rgba(255,193,7,0.35); border:4px solid rgba(255,193,7,0.7); }
+.theme-card .trophy-badge{
+  position:absolute; bottom:10px; right:12px; font-size:26px;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.2));
+}
+
+/* ============ FONDOS ILUSTRADOS POR TEMA (Codificación Dual) ============
+   Cada tema tiene su propia "escena" -globo, estrellas, puente, luna-
+   dibujada solo con gradientes CSS (sin imágenes nuevas, "detalle
+   barato") para que el niño asocie cada tema con un lugar, no solo con
+   un color de tarjeta. Se repite en la tarjeta de inicio, la teoría, la
+   pregunta y el resultado del mismo tema, para dar continuidad visual
+   de principio a fin (mismo patrón que llevó al ajolote a acompañar
+   toda la app: consistencia = menos carga cognitiva). */
+.theory-card, .question-card, .result-card{
+  --scene-tint: rgba(var(--theme-color-rgb), .07);
+}
+.theme-card[data-theme="ciudadania-digital"],
+.theory-card[data-theme="ciudadania-digital"],
+.question-card[data-theme="ciudadania-digital"],
+.result-card[data-theme="ciudadania-digital"]{
+  /* Un globo asomando en la esquina + puntitos de "mapa" (pasaporte) */
+  background-image:
+    radial-gradient(circle at 92% 102%, var(--scene-tint) 0%, var(--scene-tint) 34%, transparent 35%),
+    radial-gradient(circle at 8% 14%, var(--scene-tint) 0 4px, transparent 5px),
+    radial-gradient(circle at 16% 22%, var(--scene-tint) 0 3px, transparent 4px),
+    radial-gradient(circle at 11% 30%, var(--scene-tint) 0 3px, transparent 4px);
+}
+.theme-card[data-theme="superpoderes-digitales"],
+.theory-card[data-theme="superpoderes-digitales"],
+.question-card[data-theme="superpoderes-digitales"],
+.result-card[data-theme="superpoderes-digitales"]{
+  /* Un cielo con destellos (superpoderes = un cielo estrellado) */
+  background-image:
+    radial-gradient(circle at 86% 14%, var(--scene-tint) 0 3px, transparent 4px),
+    radial-gradient(circle at 93% 30%, var(--scene-tint) 0 2px, transparent 3px),
+    radial-gradient(circle at 76% 8%, var(--scene-tint) 0 2px, transparent 3px),
+    radial-gradient(circle at 12% 86%, var(--scene-tint) 0 3px, transparent 4px),
+    radial-gradient(circle at 20% 93%, var(--scene-tint) 0 2px, transparent 3px);
+}
+.theme-card[data-theme="plan-nacional"],
+.theory-card[data-theme="plan-nacional"],
+.question-card[data-theme="plan-nacional"],
+.result-card[data-theme="plan-nacional"]{
+  /* Dos arcos de puente + una línea de camino abajo */
+  background-image:
+    radial-gradient(circle at 24% 106%, var(--scene-tint) 0%, var(--scene-tint) 20%, transparent 21%),
+    radial-gradient(circle at 76% 106%, var(--scene-tint) 0%, var(--scene-tint) 20%, transparent 21%),
+    linear-gradient(var(--scene-tint), var(--scene-tint));
+  background-size: auto, auto, 100% 3px;
+  background-position: 0 0, 0 0, 0 90%;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+}
+.theme-card[data-theme="mision-2030"],
+.theory-card[data-theme="mision-2030"],
+.question-card[data-theme="mision-2030"],
+.result-card[data-theme="mision-2030"]{
+  /* Una luna en la esquina + estrellitas (misión espacial) */
+  background-image:
+    radial-gradient(circle at 88% 10%, var(--scene-tint) 0%, var(--scene-tint) 15%, transparent 16%),
+    radial-gradient(circle at 15% 78%, var(--scene-tint) 0 2px, transparent 3px),
+    radial-gradient(circle at 25% 63%, var(--scene-tint) 0 2px, transparent 3px),
+    radial-gradient(circle at 10% 53%, var(--scene-tint) 0 2px, transparent 3px);
+}
+
+/* ============ SETTINGS PANEL ============ */
+.settings-panel{
+  background:#fff; border-radius:20px; padding:16px 18px; box-shadow:var(--shadow);
+  margin-bottom:18px;
+}
+.settings-title{ margin:0 0 10px; font-size:16px; color:var(--purple); }
+.toggle-row{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 0; cursor:pointer;
+}
+.toggle-row + .toggle-row{ border-top:1px solid #F0ECFB; }
+.toggle-label{ font-size:15px; font-weight:bold; color:var(--ink); }
+.toggle-switch{ position:relative; width:46px; height:26px; flex-shrink:0; display:inline-block; }
+.toggle-switch input{ opacity:0; width:0; height:0; position:absolute; }
+.toggle-slider{
+  position:absolute; inset:0; background:#E0DAF0; border-radius:999px;
+  transition:background .2s ease;
+}
+.toggle-slider::before{
+  content:''; position:absolute; left:3px; top:3px; width:20px; height:20px;
+  background:#fff; border-radius:50%; transition:transform .2s ease;
+  box-shadow:0 2px 3px rgba(0,0,0,.15);
+}
+.toggle-switch input:checked + .toggle-slider{ background:var(--green); }
+.toggle-switch input:checked + .toggle-slider::before{ transform:translateX(20px); }
+
+.home-footer{ text-align:center; margin-top:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+.ghost-btn{
+  background:transparent; border:2px dashed #C6C0DE; color:#8B84A8;
+  padding:8px 16px; border-radius:14px; font-size:13px; cursor:pointer;
+  font-family:inherit;
+}
+.parent-report-btn{ border-color:var(--purple); color:var(--purple); }
+
+/* ============ REPORTE PARA PAPÁS (Interfaz de Facilitación) ============ */
+.parent-intro{ font-size:14px; color:#6B6488; margin:0 0 16px; text-align:center; }
+.parent-list{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+.parent-row{
+  background:#fff; border-radius:16px; padding:12px 14px; display:flex; align-items:center; gap:12px;
+  box-shadow:var(--shadow);
+}
+.parent-row-emoji{ font-size:30px; flex-shrink:0; }
+.parent-row-info{ flex:1; }
+.parent-row-title{ margin:0; font-size:15px; font-weight:bold; color:var(--ink); }
+.parent-row-status{ margin:2px 0 0; font-size:13px; color:#6B6488; }
+.parent-total{ text-align:center; font-weight:bold; color:var(--purple); font-size:15px; }
+
+/* Cápsula de neurociencia: un concepto breve con respaldo bibliográfico,
+   distinta (fondo lavanda suave) para leerse como "dato curioso", no
+   como una alerta clínica. Cambia en cada visita al reporte. */
+.parent-science-card{
+  background:#F1ECFF; border-radius:18px; padding:16px 18px; margin-top:18px;
+  box-shadow:var(--shadow);
+}
+.parent-science-head{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.parent-science-icon{ font-size:26px; flex-shrink:0; }
+.parent-science-head h3{ margin:0; font-size:15px; color:var(--purple); line-height:1.3; }
+.parent-science-card p{ margin:0 0 6px; font-size:14px; color:var(--ink); line-height:1.5; }
+.parent-science-source{
+  margin:0 !important; font-size:12px !important; color:#8B84A8 !important;
+  font-style:italic;
+}
+
+/* Frase del "coach": tono cálido y personal para el adulto, con acento
+   distinto (durazno/amarillo) para diferenciarla del dato científico. */
+.parent-coach-card{
+  background:#FFF3E0; border-radius:18px; padding:16px 18px; margin-top:12px;
+  display:flex; gap:10px; align-items:flex-start; box-shadow:var(--shadow);
+}
+.parent-coach-icon{ font-size:24px; flex-shrink:0; }
+.parent-coach-card p{ margin:0; font-size:14px; color:var(--ink); line-height:1.5; font-weight:bold; }
+
+/* ============ BUTTONS ============ */
+.primary-btn{
+  background:linear-gradient(180deg,#8A6FFF,#6C4CF5); color:#fff; border:none;
+  padding:14px 22px; border-radius:18px; font-size:18px; font-weight:bold;
+  box-shadow:0 6px 0 #4A32C4; cursor:pointer; font-family:inherit;
+  transition:transform .08s ease, box-shadow .08s ease;
+}
+.primary-btn:active{ transform:translateY(5px); box-shadow:0 1px 0 #4A32C4; }
+.primary-btn[disabled]{ opacity:.45; box-shadow:0 6px 0 rgba(0,0,0,.1); pointer-events:none; }
+.secondary-btn{
+  background:#fff; color:var(--purple); border:2px solid var(--purple);
+  padding:12px 20px; border-radius:18px; font-size:16px; font-weight:bold; cursor:pointer;
+  font-family:inherit;
+}
+.secondary-btn[disabled]{ opacity:.45; pointer-events:none; }
+.big-btn{ display:block; width:100%; margin-top:20px; font-size:20px; padding:18px; }
+.icon-btn{
+  background:#fff; border:none; border-radius:14px; width:44px; height:44px;
+  font-size:22px; box-shadow:var(--shadow); cursor:pointer;
+}
+/* Salir del quiz requiere mantener presionado (Ley de Fitts: un tap
+   simple en un botón pequeño es fácil de tocar sin querer y descarta
+   el intento en curso). El relleno rojo progresivo es la señal visual
+   de "sigue presionando" durante los ~600ms de espera. */
+#quizExitBtn.holding{
+  background:var(--red); color:#fff;
+  transition:background .6s linear, transform .15s ease;
+  transform:scale(.9);
+}
+
+/* ============ THEORY ============ */
+.topbar{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+.topbar h2{ flex:1; margin:0; font-size:clamp(19px,3vw,26px); color:var(--purple); text-align:center; }
+.theme-emoji-badge{ font-size:32px; }
+
+.theory-card{
+  background:#fff; border-radius:24px; padding:22px 20px; box-shadow:var(--shadow);
+}
+/* La mascota vive junto al botón que la activa, no encima del texto:
+   así el niño ve claramente "quién" le está leyendo, sin que la
+   cabeza tape ninguna línea de la teoría. */
+.theory-speak-row{ display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+.theory-mascot{ width:64px; height:64px; flex-shrink:0; }
+.theory-speak-row .speak-btn{ flex:1; width:auto; margin-bottom:0; }
+
+.theory-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px; counter-reset:theory-counter; }
+.theory-list li{
+  position:relative;
+  font-size:17px; line-height:1.5; background:#F6F3FF; border-radius:16px;
+  padding:12px 16px 12px 50px; border-left:6px solid var(--purple);
+}
+.theory-list li:not(.theory-divider)::before{
+  counter-increment:theory-counter; content:counter(theory-counter);
+  position:absolute; left:14px; top:12px; width:24px; height:24px; border-radius:50%;
+  background:var(--purple); color:#fff; font-size:13px; font-weight:bold;
+  display:flex; align-items:center; justify-content:center;
+}
+/* Separador de "chunk" (Ley de Miller): agrupa la teoría en bloques de
+   a lo más 4 ítems en vez de una sola lista corrida de 6-8, para no
+   saturar la memoria de trabajo de un niño. No tiene número propio ni
+   borde de tarjeta, solo marca una pausa visual entre grupos. */
+.theory-list li.theory-divider{
+  background:none; border-left:none; padding:0; text-align:center;
+  font-size:18px; opacity:.6;
+}
+
+.theory-summary{ display:none; margin-top:16px; }
+.theory-summary{
+  background:#FFF3D6; border-radius:16px; padding:14px 16px; border:2px dashed var(--accent-yellow, #FFC107);
+}
+.theory-summary-label{ display:block; font-size:12px; font-weight:bold; text-transform:uppercase; color:#B8860B; margin-bottom:4px; }
+.theory-summary p{ margin:0; font-size:16px; font-weight:bold; color:var(--ink); line-height:1.4; }
+
+.speak-btn{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; margin-bottom:18px;
+  background:linear-gradient(180deg,#3DDC84,#22B573); color:#fff; border:none;
+  padding:14px 18px; border-radius:16px; font-size:16px; font-weight:bold;
+  box-shadow:0 5px 0 #178F55; cursor:pointer; font-family:inherit;
+  transition:transform .08s ease, box-shadow .08s ease;
+}
+.speak-btn:active{ transform:translateY(4px); box-shadow:0 1px 0 #178F55; }
+.speak-btn .speak-icon{ font-size:22px; }
+.speak-btn.speaking{ animation:speakPulse 1s ease-in-out infinite; }
+@keyframes speakPulse{
+  0%,100%{ box-shadow:0 5px 0 #178F55, 0 0 0 0 rgba(61,220,132,0.45); }
+  50%{ box-shadow:0 5px 0 #178F55, 0 0 0 8px rgba(61,220,132,0); }
+}
+
+/* ============ PREPÁRATE (Get Ready - Do - Done) ============ */
+.prep-instructions{ text-align:center; font-size:19px; margin:0 0 16px; color:#5B5478; font-weight:bold; }
+.prep-columns{
+  position:relative; display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px;
+}
+/* Línea conectora entre las 3 tarjetas (Ley de Continuidad / Gestalt):
+   el ojo sigue el camino de una tarjeta a la siguiente en vez de verlas
+   como 3 elementos sueltos sin relación. */
+.prep-columns::before{
+  content:''; position:absolute; top:14px; left:16%; right:16%; height:3px;
+  background:repeating-linear-gradient(90deg,#D9D3EF 0 8px,transparent 8px 14px);
+  z-index:0;
+}
+.prep-columns .prep-card{ position:relative; z-index:1; }
+.prep-card{
+  position:relative; border:none; border-radius:22px;
+  padding:22px 10px 16px; text-align:center; cursor:pointer; font-family:inherit;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  transition:transform .1s ease, box-shadow .2s ease, background .3s ease;
+  box-shadow:0 6px 0 rgba(0,0,0,.1);
+}
+.prep-card:active{ transform:translateY(3px); }
+/* Cada tarjeta tiene un fondo de color sólido propio -como la imagen
+   de referencia del usuario- en vez de tinte casi blanco: el color
+   anticipa de qué trata la tarjeta (Estética funcional). El paso 3
+   (la meta) usa el acento dorado para distinguirse como el hito
+   -Efecto Von Restorff-, no solo un paso más. */
+.prep-card.accent-sky{ background:linear-gradient(160deg,#7BDCFF,#43B8EE); }
+.prep-card.accent-purple{ background:linear-gradient(160deg,#A98CFF,#7C4DFF); }
+.prep-card.accent-gold{ background:linear-gradient(160deg,#FFDD6B,#FFC107); }
+.prep-step-num{
+  position:absolute; top:-14px; left:-12px; width:38px; height:38px; border-radius:50%;
+  background:#fff; color:var(--purple); font-size:19px; font-weight:bold;
+  display:flex; align-items:center; justify-content:center; box-shadow:0 3px 0 rgba(0,0,0,.15);
+}
+/* La mascota (ajolote) hace de ícono, apoyada sobre un "halo" circular
+   más claro que el fondo de la tarjeta -misma composición que la
+   imagen de referencia: personaje + círculo de luz detrás-, en vez de
+   un ícono genérico flotando sin apoyo visual. */
+.prep-icon-stage{
+  position:relative; width:108px; height:108px;
+  display:flex; align-items:center; justify-content:center;
+}
+.prep-icon-halo{
+  position:absolute; inset:0; border-radius:50%;
+  background:rgba(255,255,255,.32);
+}
+.prep-icon-badge{
+  position:relative; z-index:1; width:92px; height:92px;
+  display:flex; align-items:center; justify-content:center;
+}
+/* Trofeo junto a la mascota SOLO en la tarjeta 3 (la meta): refuerza
+   por partida doble -personaje celebrando + trofeo- que este paso es
+   el logro final, distinto de los otros dos (Efecto Von Restorff). */
+.prep-icon-trophy{
+  position:absolute; bottom:-2px; right:-8px; z-index:2;
+  font-size:32px; filter:drop-shadow(0 3px 0 rgba(0,0,0,.18));
+}
+/* Etiqueta de texto sobre una placa blanca (en vez de texto directo
+   sobre el color de la tarjeta): garantiza buen contraste de lectura
+   sin importar cuán vibrante sea el fondo de cada tarjeta. */
+.prep-label-chip{
+  background:#fff; border-radius:14px; padding:6px 10px; width:100%;
+  box-shadow:0 2px 0 rgba(0,0,0,.06);
+}
+.prep-label{ font-size:16px; line-height:1.35; font-weight:bold; color:var(--ink); }
+.prep-check{ display:none; font-size:20px; }
+.prep-card.done{ background:linear-gradient(160deg,#7EE8B0,var(--green)); }
+.prep-card.done .prep-check{ display:block; }
+.prep-card.done .prep-step-num{ color:var(--green-dark); }
+.prep-card.nudge{ animation:shake .35s ease; }
+
+/* Franja recordatorio fija durante el quiz (prótesis ambiental externa) */
+.prep-reminder{
+  display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:14px;
+}
+.reminder-chip{
+  background:#F1ECFF; color:var(--purple); font-size:12px; font-weight:bold;
+  padding:6px 12px; border-radius:999px;
+}
+
+/* ============ QUIZ ============ */
+.quiz-topbar{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.progress-block{ flex:1; text-align:center; }
+#quizProgressText{ font-weight:bold; color:#6C4CF5; font-size:15px; }
+.stars-row{ display:flex; gap:4px; justify-content:center; margin-top:4px; font-size:16px; }
+.stars-row .star-slot{ opacity:.3; }
+.stars-row .star-slot.earned{ opacity:1; animation:pop .35s ease; }
+
+@keyframes pop{ 0%{transform:scale(0.3);} 60%{transform:scale(1.3);} 100%{transform:scale(1);} }
+
+/* ============ MAPA DE SESIÓN (Ley de Continuidad / Gestalt) ============
+   Un punto por cada pregunta, unidos por una línea, para que el niño
+   vea de un vistazo cuánto camino recorrió y cuánto falta -en vez de
+   solo leer "3/7"-. El punto actual pulsa; los ya respondidos quedan
+   en verde (acierto) o ámbar (fallo o tiempo agotado), nunca en rojo,
+   para que ningún punto se sienta como un "error marcado". */
+.session-roadmap{
+  position:relative; display:flex; align-items:center; justify-content:center;
+  gap:6px; height:16px; margin-top:6px;
+}
+.session-roadmap::before{
+  content:''; position:absolute; top:50%; left:2px; right:2px; height:2px;
+  background:#E7E2F7; transform:translateY(-50%); z-index:0;
+}
+.roadmap-dot{
+  position:relative; z-index:1; flex-shrink:0;
+  width:10px; height:10px; border-radius:50%; background:#E0DAF0;
+  transition:width .25s ease, height .25s ease, background .25s ease, box-shadow .25s ease;
+}
+.roadmap-dot.current{
+  width:14px; height:14px; background:var(--purple);
+  box-shadow:0 0 0 5px rgba(124,77,255,.2);
+  animation:roadmapPulse 1.6s ease-in-out infinite;
+}
+.roadmap-dot.correct{ width:12px; height:12px; background:var(--green); box-shadow:none; animation:none; }
+.roadmap-dot.wrong{ width:12px; height:12px; background:var(--accent-yellow); box-shadow:none; animation:none; }
+@keyframes roadmapPulse{
+  0%,100%{ box-shadow:0 0 0 5px rgba(124,77,255,.2); }
+  50%{ box-shadow:0 0 0 8px rgba(124,77,255,.06); }
+}
+
+.timer-ring-wrap{ position:relative; width:56px; height:56px; flex-shrink:0; }
+.timer-ring{ width:56px; height:56px; transform:rotate(-90deg); }
+.timer-ring-bg{ fill:none; stroke:#EDE9FA; stroke-width:6; }
+.timer-ring-fg{
+  fill:none; stroke:var(--green); stroke-width:6; stroke-linecap:round;
+  stroke-dasharray:175.9; stroke-dashoffset:0;
+  transition:stroke-dashoffset 1s linear, stroke .6s ease;
+}
+.timer-number{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-weight:bold; font-size:13px; color:#7A7397;
+}
+/* Modo sin tiempo: el reloj desaparece por completo, sin presión */
+body.timerless .timer-ring-wrap{ display:none; }
+/* La actividad CRA tampoco corre contra el reloj (ver renderQuestion) */
+body.no-timer-question .timer-ring-wrap{ display:none; }
+
+.question-card{
+  background:#fff; border-radius:24px; padding:22px 18px; text-align:center;
+  box-shadow:var(--shadow); margin-bottom:18px;
+}
+/* Igual que en teoría: la mascota se sienta junto al botón de "escuchar
+   pregunta", nunca sobre la pregunta ni las opciones. */
+.question-speak-row{ display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px; }
+.quiz-mascot{ width:40px; height:40px; flex-shrink:0; }
+.speak-question-btn{
+  background:#F6F3FF; border:none; border-radius:999px; padding:7px 14px;
+  font-size:12px; font-weight:bold; color:var(--purple); cursor:pointer; font-family:inherit;
+}
+.speak-question-btn.speaking{ background:#E4DBFF; }
+/* Insignia circular (no emoji "flotante"): agrupa visualmente el icono
+   de la pregunta, igual al lenguaje de iconos circulares de la
+   referencia gráfica, y refuerza (Gestalt) que es un elemento con el
+   que no se interactúa directamente, solo ilustra la pregunta. */
+.question-image{
+  font-size:56px; line-height:1; margin:0 auto 12px; width:104px; height:104px;
+  border-radius:50%; background:#F6F3FF; display:flex; align-items:center; justify-content:center;
+}
+.question-image svg{ width:64px; height:64px; }
+.question-prompt{ margin:0; font-size:clamp(18px,3vw,25px); color:var(--ink); line-height:1.3; }
+.question-hint{ margin:8px 0 0; font-size:14px; color:#8B84A8; }
+
+.answer-area{ display:flex; flex-direction:column; gap:12px; }
+
+/* MCQ options */
+.mcq-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.mcq-option{
+  background:#fff; border:3px solid #E7E2F7; border-radius:18px; padding:14px 16px;
+  font-size:16px; font-weight:bold; cursor:pointer; text-align:left; display:flex;
+  align-items:center; gap:10px; font-family:inherit; color:var(--ink);
+  transition:transform .1s ease, background .2s ease, border-color .2s ease;
+}
+.mcq-option:active{ transform:scale(.97); }
+.mcq-option .opt-emoji{ font-size:26px; }
+.mcq-option.correct{ background:#DFFAEA; border-color:var(--green); color:var(--green-dark); }
+.mcq-option.wrong{ background:#FFE3E3; border-color:var(--red); color:var(--red-dark); animation:shake .4s ease; }
+.mcq-option[disabled]{ pointer-events:none; }
+
+@keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+
+/* MATCH (arrastrar y soltar) */
+.match-wrap{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+.match-col{ display:flex; flex-direction:column; gap:10px; min-width:140px; }
+/* Más espacio entre los íconos para arrastrar (Ley de Fitts): un dedo
+   pequeño no debe rozar el ícono vecino al intentar tomar uno. */
+.drag-col{ align-items:center; gap:16px; }
+
+.drag-icon{
+  background:#fff; border:3px solid #E7E2F7; border-radius:16px; padding:10px 16px;
+  cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none;
+  box-shadow:0 3px 0 rgba(0,0,0,.08);
+  transition:opacity .2s ease, transform .1s ease;
+  min-width:44px; min-height:44px;
+}
+.drag-icon .opt-emoji{ font-size:30px; display:block; }
+.drag-icon.dragging{ cursor:grabbing; box-shadow:0 10px 18px rgba(0,0,0,.22); transform:scale(1.08); }
+.drag-icon.placed{ opacity:0; pointer-events:none; width:0 !important; height:0 !important; padding:0; border:none; }
+
+.drop-zone{
+  /* min-height 64px (Ley de Fitts): el objetivo táctil de una zona de
+     soltar debe ser tan generoso como un botón, no solo lo justo para
+     el texto de la etiqueta. */
+  background:#FAF8FF; border:3px dashed #D9D3EF; border-radius:16px; padding:14px;
+  min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  transition:border-color .2s ease, background .2s ease;
+}
+.drop-zone-label{ font-size:15px; font-weight:bold; text-align:left; color:var(--ink); }
+.drop-zone-icons{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+.drop-zone-icons .drag-icon{ padding:4px 8px; cursor:default; box-shadow:none; opacity:1 !important; width:auto !important; height:auto !important; }
+.drop-zone-icons .drag-icon .opt-emoji{ font-size:22px; }
+.drop-zone.drag-over{ border-style:solid; border-color:var(--purple); background:#F1ECFF; }
+.drop-zone.zone-complete{ border-style:solid; border-color:var(--green); background:#EAFCF1; }
+.drop-zone.wrongflash{ border-color:var(--red); background:#FFE3E3; animation:shake .4s ease; }
+
+/* ORDER */
+.order-slots{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
+.order-slot{
+  width:78px; height:78px; border-radius:16px; border:3px dashed #D9D3EF; background:#FAF8FF;
+  display:flex; align-items:center; justify-content:center; font-size:34px; position:relative;
+}
+.order-slot .slot-index{ position:absolute; top:-10px; left:-6px; background:var(--purple); color:#fff;
+  font-size:12px; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.order-slot.filled{ border-style:solid; border-color:var(--green); background:#EAFCF1; }
+.order-slot.correctreveal{ border-color:var(--green); background:#EAFCF1; }
+
+.order-pool{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.order-card{
+  width:78px; height:78px; border-radius:16px; background:#fff; border:3px solid #E7E2F7;
+  display:flex; align-items:center; justify-content:center; font-size:34px; cursor:pointer;
+  transition:transform .1s ease, opacity .2s ease;
+}
+.order-card:active{ transform:scale(.94); }
+.order-card.used{ opacity:0; pointer-events:none; }
+.order-card.wrongflash{ background:#FFE3E3; border-color:var(--red); animation:shake .4s ease; }
+.order-card svg, .order-slot svg{ width:44px; height:44px; }
+
+/* WAIT (control inhibitorio) */
+.wait-wrap{ background:#fff; border-radius:20px; padding:22px 18px; text-align:center; box-shadow:var(--shadow); }
+.calm-bar-track{
+  width:100%; height:22px; background:#EDE9FA; border-radius:999px; overflow:hidden;
+  margin-bottom:14px; cursor:pointer;
+}
+.calm-bar-fill{
+  height:100%; width:0%; border-radius:999px;
+  background:linear-gradient(90deg,#79D8B0,var(--green));
+}
+.wait-msg{ margin:0 0 6px; font-size:15px; color:#6B6488; font-weight:bold; }
+.wait-continue-btn[disabled]{ opacity:.35; }
+
+/* FLEX RULE (flexibilidad cognitiva) */
+.flex-wrap{ background:#fff; border-radius:20px; padding:20px 16px; box-shadow:var(--shadow); }
+.flex-rule-banner{
+  text-align:center; font-size:17px; font-weight:bold; color:var(--ink);
+  background:#F1ECFF; border-radius:14px; padding:10px 14px; margin-bottom:16px;
+  transition:background .3s ease;
+}
+.flex-rule-banner b{ color:var(--purple); }
+.flex-rule-tag{ font-size:11px; text-transform:uppercase; color:#8B84A8; margin-right:4px; }
+.flex-rule-banner.flex-rule-change{ background:#FFF3D6; animation:pop .5s ease; }
+.flex-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(74px,1fr)); gap:12px; }
+.flex-card{
+  width:100%; aspect-ratio:1/1; min-width:44px; min-height:44px; border-radius:16px; background:#fff; border:3px solid #E7E2F7;
+  display:flex; align-items:center; justify-content:center; font-size:32px; cursor:pointer;
+  transition:transform .1s ease, opacity .2s ease, border-color .2s ease, background .2s ease;
+}
+.flex-card:active{ transform:scale(.94); }
+.flex-card.done{ background:#DFFAEA; border-color:var(--green); opacity:.55; pointer-events:none; }
+.flex-card.wrongflash{ background:#FFE3E3; border-color:var(--red); animation:shake .4s ease; }
+
+/* Reto relámpago: última ronda del flexRule, cuando hay categorías
+   suficientes. Mismo mecanismo, tratamiento visual dorado y distinto
+   para que se sienta como un cierre especial y breve. */
+.flex-rule-tag-bonus{ color:#B8860B; font-weight:bold; }
+.flex-rule-banner.flex-rule-bonus{
+  background:linear-gradient(135deg,#FFF3D6,#FFE1A8);
+  border:2px solid #FFCB66;
+}
+.flex-grid-bonus .flex-card{ border-color:#FFCB66; box-shadow:0 0 0 3px rgba(255,203,102,.35); }
+
+/* ACTIVIDAD CRA (Concreto → Representativo → Abstracto) */
+.cra-wrap{ background:#fff; border-radius:20px; padding:20px 16px; box-shadow:var(--shadow); }
+.cra-phase-label{
+  text-align:center; font-size:13px; font-weight:bold; color:#8B84A8;
+  text-transform:uppercase; letter-spacing:.02em; margin:0 0 14px;
+}
+
+/* Fase 1: clasificar (concreto) */
+.cra-item-pool{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:16px; }
+.cra-item{
+  display:flex; align-items:center; gap:8px; padding:10px 14px; border-radius:16px;
+  background:#FAF8FF; border:3px solid #E7E2F7; font-size:14px; font-weight:bold; color:var(--ink);
+  cursor:pointer; transition:transform .1s ease, border-color .2s ease, background .2s ease, opacity .2s ease;
+  min-height:44px;
+}
+.cra-item-emoji{ font-size:22px; }
+.cra-item:active{ transform:scale(.96); }
+.cra-item.selected{ border-color:var(--purple); background:#F1ECFF; box-shadow:0 0 0 3px rgba(124,77,255,.18); }
+.cra-item.sorted{ opacity:.4; pointer-events:none; }
+.cra-zones{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.cra-zone{
+  flex:1; min-width:140px; min-height:44px; display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding:14px 10px; border-radius:16px; border:3px dashed #D9D3EF; background:#FAF8FF;
+  font-size:13px; font-weight:bold; color:var(--ink); cursor:pointer; transition:background .2s ease, border-color .2s ease;
+}
+.cra-zone-icon{ font-size:26px; }
+.cra-zone-share{ border-color:#B7E8CB; }
+.cra-zone-protect{ border-color:#BFD9F2; }
+.cra-zone.wrongflash{ background:#FFE3E3; border-color:var(--red); animation:shake .4s ease; }
+
+/* Fase 2: huellas (representativo) */
+.cra-trail{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:8px 0 14px; min-height:40px; }
+.cra-footprint{ font-size:28px; opacity:0; animation:craFootIn .4s ease forwards; }
+@keyframes craFootIn{ from{ opacity:0; transform:translateY(6px) scale(.6); } to{ opacity:1; transform:translateY(0) scale(1); } }
+.cra-note{ text-align:center; font-size:14px; color:#6B6488; line-height:1.5; margin:0 0 18px; }
+
+/* Fase 3: término abstracto */
+.cra-abstract-card{
+  text-align:center; background:#F1ECFF; border-radius:18px; padding:22px 18px; margin-bottom:16px;
+  animation:pop .4s ease;
+}
+.cra-abstract-icon{ font-size:40px; display:block; margin-bottom:6px; }
+.cra-abstract-card h3{ margin:0 0 8px; font-size:20px; color:var(--purple); }
+.cra-abstract-card p{ margin:0; font-size:14px; color:var(--ink); line-height:1.5; }
+.cra-continue-btn{ display:block; margin:0 auto; }
+
+/* ============ RESULT ============ */
+.result-card{
+  position:relative; background:#fff; border-radius:28px; padding:32px 22px; text-align:center;
+  box-shadow:var(--shadow); margin-top:30px;
+}
+.trophy-wrap{ margin-bottom:6px; }
+.trophy{
+  font-size:clamp(70px,10vw,100px); display:inline-block;
+  filter:drop-shadow(0 0 18px rgba(255,193,7,0.9)) drop-shadow(0 6px 0 rgba(0,0,0,.1));
+  animation:trophySpin 1.2s ease;
+}
+@keyframes trophySpin{
+  0%{ transform:scale(0) rotate(-30deg); }
+  60%{ transform:scale(1.25) rotate(10deg); }
+  100%{ transform:scale(1) rotate(0); }
+}
+#resultTitle{ margin:6px 0 2px; }
+#resultMessage{ color:#6B6488; font-size:16px; margin-bottom:10px;}
+.big-stars{ font-size:34px; gap:8px; margin:14px 0; }
+.big-stars .star-slot{ transition:transform .3s ease, opacity .3s ease; }
+.result-score{ font-weight:bold; color:#6B6488; margin-bottom:18px; }
+.result-buttons{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+/* ============ FEEDBACK OVERLAY ============ */
+.feedback-overlay{
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+  background:rgba(58,51,88,0.35); z-index:500; padding:20px;
+}
+.feedback-overlay.show{ display:flex; animation:fadeIn .2s ease; }
+.feedback-box{
+  background:#fff; border-radius:26px; padding:30px 34px; text-align:center;
+  box-shadow:0 10px 0 rgba(0,0,0,.15); max-width:340px;
+  animation:pop .3s ease;
+}
+/* Variante "toast": no cubre la pantalla ni las respuestas resaltadas,
+   se ancla abajo para que el niño pueda ver la retroalimentación y las
+   tarjetas de respuesta (correcta/incorrecta) al mismo tiempo. */
+.feedback-overlay.toast-overlay{
+  align-items:flex-end; background:transparent; pointer-events:none;
+}
+.feedback-overlay.toast-overlay .feedback-box{
+  pointer-events:auto; margin-bottom:14px; width:100%;
+  box-shadow:0 12px 30px rgba(58,51,88,.28);
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp{ from{ transform:translateY(28px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+.feedback-box.correct{ border:6px solid var(--green); }
+.feedback-box.wrong{ border:6px solid var(--red); }
+.feedback-box.neutral{ border:6px solid var(--calm); }
+.feedback-emoji{ font-size:56px; display:block; margin:0 auto 8px; width:72px; height:72px; }
+.feedback-emoji svg,.feedback-emoji .axolotl{ width:100%; height:100%; display:block; }
+.feedback-phrase{ font-size:20px; font-weight:bold; margin:0; color:var(--ink); }
+.feedback-hint{ font-size:14px; color:#6B6488; margin:8px 0 0; display:none; }
+.feedback-sub{ font-size:14px; color:#8B84A8; margin:6px 0 0; }
+
+/* MOVEMENT BREAK */
+.movement-box{ border:6px solid var(--yellow); }
+.movement-continue{ margin-top:16px; opacity:.4; }
+.movement-continue.ready{ opacity:1; }
+
+/* ============ RESPONSIVE ============
+   Mobile-first: los estilos base ya sirven a un celular chico. De aquí
+   para abajo se afinan casos concretos: teléfonos muy pequeños, tablets,
+   pantallas grandes (PC) y el caso especial de landscape con poca altura
+   (celular/tablet acostado), sin romper el diseño ni los objetivos
+   táctiles de 44px mínimo (Ley de Fitts) en ningún tamaño. */
+
+/* Teléfonos pequeños */
+@media (max-width:480px){
+  .theme-grid{ grid-template-columns:repeat(2,1fr); }
+  .order-slot,.order-card{ width:62px; height:62px; font-size:26px; }
+  .prep-columns{ grid-template-columns:1fr; }
+}
+
+/* Tablets (retrato y paisaje angosto): más aire entre las 3 tarjetas de
+   "Prepárate" y tarjetas de tema un poco más generosas, sin cambiar la
+   estructura general de una sola columna centrada. */
+@media (min-width:600px) and (max-width:1023px){
+  #app{ max-width:760px; }
+  .prep-columns{ gap:20px; }
+  .theme-grid{ grid-template-columns:repeat(3,1fr); }
+}
+
+/* Pantallas grandes (tablets en landscape / PC): la columna única de
+   900px ya no aprovecha el espacio, así que las pantallas de teoría y
+   pregunta pasan a 2 columnas (mascota+ícono a un lado, contenido al
+   otro) en vez de dejar franjas vacías a los costados -mismo contenido,
+   mejor uso del espacio-. */
+@media (min-width:1024px){
+  #app{ max-width:1100px; }
+  .theme-grid{ grid-template-columns:repeat(4,1fr); }
+
+  .theory-card{
+    display:grid; grid-template-columns:200px 1fr;
+    grid-template-areas:"mascot list" "mascot summary";
+    gap:8px 32px; align-items:start;
+  }
+  .theory-speak-row{
+    grid-area:mascot; flex-direction:column; margin-bottom:0;
+    position:sticky; top:24px;
+  }
+  .theory-mascot{ width:96px; height:96px; }
+  .theory-speak-row .speak-btn{ width:100%; }
+  .theory-list{ grid-area:list; }
+  .theory-summary{ grid-area:summary; margin-top:0; }
+
+  .question-card{
+    display:grid; grid-template-columns:180px 1fr;
+    grid-template-areas:"speak prompt" "image prompt" "image hint";
+    gap:6px 32px; align-items:start; text-align:left;
+  }
+  .question-speak-row{ grid-area:speak; justify-content:flex-start; margin-bottom:4px; }
+  .question-image{ grid-area:image; margin:0; }
+  .question-prompt{ grid-area:prompt; text-align:left; align-self:center; }
+  .question-hint{ grid-area:hint; text-align:left; }
+}
+
+/* Landscape con poca altura (celular acostado, o tablet chica): los
+   overlays modales (retroalimentación, pausa de movimiento) pueden ser
+   más altos que la pantalla disponible, así que se vuelven scrolleables
+   y con menos relleno en vez de recortar contenido fuera de vista. */
+@media (max-height:480px) and (orientation:landscape){
+  .feedback-overlay{ padding:10px; }
+  .feedback-box{
+    padding:16px 22px; max-height:92vh; max-height:92dvh; overflow-y:auto;
+  }
+  .feedback-emoji{ width:48px; height:48px; font-size:38px; margin-bottom:4px; }
+  .movement-continue{ margin-top:10px; }
+  #app{ padding-top:calc(8px + env(safe-area-inset-top)); padding-bottom:calc(16px + env(safe-area-inset-bottom)); }
+  .prep-mascot-row{ margin-bottom:8px; }
+}

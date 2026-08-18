@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>🦸 Ciudadano Digital - Perú</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="confettiCanvas" aria-hidden="true"></canvas>
+
+<div id="app">
+
+  <!-- ============ HOME SCREEN ============ -->
+  <section id="homeScreen" class="screen active">
+    <header class="home-header">
+      <div class="mascot-row">
+        <span class="mascot" id="homeMascot" role="img" aria-label="Axo, la mascota ajolote"></span>
+        <div class="title-block">
+          <h1>Ciudadano Digital</h1>
+          <p>¡Descubre tus superpoderes! <svg class="flag-icon" viewBox="0 0 3 2" preserveAspectRatio="none" role="img" aria-label="Bandera del Perú"><rect width="1" height="2" x="0" fill="#D91023"/><rect width="1" height="2" x="1" fill="#FFFFFF"/><rect width="1" height="2" x="2" fill="#D91023"/></svg></p>
+        </div>
+      </div>
+      <div class="total-stars" id="totalStarsBadge">
+        <span class="star-icon" aria-hidden="true">⭐</span>
+        <span id="totalStarsCount">0</span>
+      </div>
+    </header>
+
+    <p class="home-instructions">Elige un tema para aprender y jugar 👇</p>
+
+    <div id="themeGrid" class="theme-grid"></div>
+
+    <section class="settings-panel">
+      <h3 class="settings-title">⚙️ Ajustes</h3>
+      <label class="toggle-row">
+        <span class="toggle-label">⏱️ Modo sin tiempo</span>
+        <span class="toggle-switch">
+          <input type="checkbox" id="timerlessToggle">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+      <label class="toggle-row">
+        <span class="toggle-label">🏃 Pausas de movimiento</span>
+        <span class="toggle-switch">
+          <input type="checkbox" id="movementToggle">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+      <label class="toggle-row">
+        <span class="toggle-label">🔊 Música y sonidos</span>
+        <span class="toggle-switch">
+          <input type="checkbox" id="soundToggle">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+    </section>
+
+    <footer class="home-footer">
+      <button id="parentReportBtn" class="ghost-btn parent-report-btn">👨‍👩‍👧 Reporte para papás</button>
+      <button id="resetProgressBtn" class="ghost-btn">🔄 Reiniciar progreso</button>
+    </footer>
+  </section>
+
+  <!-- ============ REPORTE PARA PAPÁS (Interfaz de Facilitación) ============ -->
+  <section id="parentScreen" class="screen">
+    <div class="topbar">
+      <button class="icon-btn back-btn" id="parentBackBtn" aria-label="Volver">⬅️</button>
+      <h2>Reporte para papás</h2>
+      <span class="theme-emoji-badge" aria-hidden="true">📋</span>
+    </div>
+    <p class="parent-intro">Así va tu hijo o hija en cada tema. Sin juegos ni puntajes de más, solo lo esencial.</p>
+    <div id="parentList" class="parent-list"></div>
+    <p class="parent-total" id="parentTotalStars">0 estrellas en total</p>
+
+    <div class="parent-science-card" id="parentScienceCard">
+      <div class="parent-science-head">
+        <span class="parent-science-icon" id="parentScienceIcon" aria-hidden="true">🧠</span>
+        <h3 id="parentScienceTitle">Concepto</h3>
+      </div>
+      <p id="parentScienceText"></p>
+      <p class="parent-science-source" id="parentScienceSource"></p>
+    </div>
+
+    <div class="parent-coach-card" id="parentCoachCard">
+      <span class="parent-coach-icon" aria-hidden="true">💛</span>
+      <p id="parentCoachText"></p>
+    </div>
+  </section>
+
+  <!-- ============ THEORY SCREEN ============ -->
+  <section id="theoryScreen" class="screen">
+    <div class="topbar">
+      <button class="icon-btn back-btn" id="theoryBackBtn" aria-label="Volver">⬅️</button>
+      <h2 id="theoryTitle">Tema</h2>
+      <span class="theme-emoji-badge" id="theoryEmoji" aria-hidden="true">🔬</span>
+    </div>
+    <div class="theory-card" id="theoryCard">
+      <div class="theory-speak-row">
+        <span class="mascot theory-mascot" id="theoryMascot" role="img" aria-label="Axo explicando la teoría"></span>
+        <button id="speakTheoryBtn" class="speak-btn" type="button">
+          <span class="speak-icon">🔊</span> <span class="speak-label">Escuchar teoría</span>
+        </button>
+      </div>
+      <ul id="theoryList" class="theory-list"></ul>
+      <div class="theory-summary" id="theorySummary"></div>
+    </div>
+    <button id="startQuizBtn" class="primary-btn big-btn">🚀 ¡Empezar preguntas!</button>
+  </section>
+
+  <!-- ============ PREPÁRATE SCREEN (Get Ready - Do - Done) ============ -->
+  <section id="prepScreen" class="screen">
+    <div class="topbar">
+      <button class="icon-btn back-btn" id="prepBackBtn" aria-label="Volver">⬅️</button>
+      <h2>¡Prepárate!</h2>
+      <span class="theme-emoji-badge" id="prepEmoji" aria-hidden="true">🔬</span>
+    </div>
+    <div class="prep-mascot-row">
+      <span class="mascot prep-mascot" id="prepMascot" role="img" aria-label="Axo animándote a prepararte"></span>
+      <div class="speech-bubble">¡Hola! Vamos a prepararnos juntos 🌟</div>
+    </div>
+    <p class="prep-instructions">Toca las 3 tarjetas en orden 👇</p>
+    <div class="prep-columns">
+      <button type="button" class="prep-card accent-sky" id="prepGetReady">
+        <span class="prep-step-num">1</span>
+        <span class="prep-icon-stage">
+          <span class="prep-icon-halo"></span>
+          <span class="prep-icon-badge mascot" id="prepIconReady" aria-hidden="true"></span>
+        </span>
+        <span class="prep-label-chip"><span class="prep-label">Me preparo</span></span>
+        <span class="prep-check" aria-hidden="true">✅</span>
+      </button>
+      <button type="button" class="prep-card accent-purple" id="prepDo">
+        <span class="prep-step-num">2</span>
+        <span class="prep-icon-stage">
+          <span class="prep-icon-halo"></span>
+          <span class="prep-icon-badge mascot" id="prepIconCalm" aria-hidden="true"></span>
+        </span>
+        <span class="prep-label-chip"><span class="prep-label">Respondo con calma<br>(¡Yo puedo!)</span></span>
+        <span class="prep-check" aria-hidden="true">✅</span>
+      </button>
+      <button type="button" class="prep-card accent-gold" id="prepDone">
+        <span class="prep-step-num">3</span>
+        <span class="prep-icon-stage">
+          <span class="prep-icon-halo"></span>
+          <span class="prep-icon-badge mascot" id="prepIconGoal" aria-hidden="true"></span>
+          <span class="prep-icon-trophy" aria-hidden="true">🏆</span>
+        </span>
+        <span class="prep-label-chip"><span class="prep-label">¡Bravo! Conseguí<br>la meta</span></span>
+        <span class="prep-check" aria-hidden="true">✅</span>
+      </button>
+    </div>
+    <button id="prepStartBtn" class="primary-btn big-btn" disabled>🚀 ¡Empezar!</button>
+  </section>
+
+  <!-- ============ QUIZ SCREEN ============ -->
+  <section id="quizScreen" class="screen">
+    <div class="quiz-topbar">
+      <button class="icon-btn" id="quizExitBtn" aria-label="Salir e ir al menú principal">🏠</button>
+      <div class="progress-block">
+        <span id="quizProgressText">Pregunta 1/6</span>
+        <div class="session-roadmap" id="quizStarsRow" aria-hidden="true"></div>
+      </div>
+      <div class="timer-ring-wrap">
+        <svg class="timer-ring" viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="timer-ring-bg" cx="32" cy="32" r="28"></circle>
+          <circle class="timer-ring-fg" id="timerRingFg" cx="32" cy="32" r="28"></circle>
+        </svg>
+        <span class="timer-number" id="timerNumber">30</span>
+      </div>
+    </div>
+
+    <div class="prep-reminder" id="prepReminder">
+      <span class="reminder-chip">😊 Me preparo</span>
+      <span class="reminder-chip">😌 Respondo con calma</span>
+      <span class="reminder-chip" id="reminderGoal">🏆 Meta</span>
+    </div>
+
+    <div class="question-card" id="questionCard">
+      <div class="question-speak-row">
+        <span class="mascot quiz-mascot" id="quizMascot" role="img" aria-label="Axo acompañándote en las preguntas"></span>
+        <button id="speakQuestionBtn" class="speak-question-btn" type="button">🔊 Escuchar pregunta</button>
+      </div>
+      <div class="question-image" id="questionImage" aria-hidden="true">🔬</div>
+      <h2 class="question-prompt" id="questionPrompt">Pregunta</h2>
+      <p class="question-hint" id="questionHint"></p>
+    </div>
+
+    <div class="answer-area" id="answerArea"></div>
+  </section>
+
+  <!-- ============ RESULT SCREEN ============ -->
+  <section id="resultScreen" class="screen">
+    <div class="result-card" id="resultCard">
+      <div class="memphis-shapes" aria-hidden="true">
+        <span class="shape shape-1"></span><span class="shape shape-2"></span>
+        <span class="shape shape-3"></span><span class="shape shape-4"></span>
+        <span class="shape shape-5"></span><span class="shape shape-6"></span>
+        <span class="shape shape-7"></span><span class="shape shape-8"></span>
+      </div>
+      <span class="mascot result-mascot" id="resultMascot" role="img" aria-label="Axo celebrando tu logro"></span>
+      <div class="trophy-wrap">
+        <span class="trophy" id="trophyEmoji" aria-hidden="true">🏆</span>
+      </div>
+      <h2 id="resultTitle" class="sticker-text">¡Tema completado!</h2>
+      <p id="resultMessage">¡Lo hiciste muy bien!</p>
+      <div class="stars-row big-stars" id="resultStarsRow" aria-hidden="true"></div>
+      <p class="result-score" id="resultScoreText">6 de 6 correctas</p>
+      <div class="result-buttons">
+        <button id="replayBtn" class="primary-btn">🔁 Jugar de nuevo</button>
+        <button id="homeBtn" class="secondary-btn">🏠 Menú principal</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEEDBACK OVERLAY ============ -->
+  <div id="feedbackOverlay" class="feedback-overlay toast-overlay">
+    <div class="feedback-box" id="feedbackBox" role="status" aria-live="polite">
+      <span class="feedback-emoji" id="feedbackEmoji" aria-hidden="true">🎉</span>
+      <p class="feedback-phrase" id="feedbackPhrase">¡Genial!</p>
+      <p class="feedback-hint" id="feedbackHint"></p>
+    </div>
+  </div>
+
+  <!-- ============ MOVEMENT BREAK OVERLAY ============ -->
+  <div id="movementBreakOverlay" class="feedback-overlay">
+    <div class="feedback-box movement-box">
+      <span class="feedback-emoji" id="movementEmoji" aria-hidden="true">🙌</span>
+      <p class="feedback-phrase" id="movementPhrase">¡Sacude las manos!</p>
+      <p class="feedback-sub">Una pausa cortita para movernos 💪</p>
+      <button type="button" class="secondary-btn movement-continue" id="movementContinueBtn" disabled>Continuar ▶️</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
