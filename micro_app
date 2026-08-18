@@ -1,6 +1,0 @@
-git init
-git add index.html style.css app.js README.md assets
-git commit -m "Primera versión de Ciudadano Digital"
-git branch -M main
-git remote add origin https://github.com/Jhonzai/ciudadano-digital-peru.git
-git push -u origin main
